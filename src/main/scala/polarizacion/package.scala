@@ -99,4 +99,19 @@ package object polarizacion {
     } yield b(i) + (a.sum / a.length)
   }
 
+  //Tipo para representation las diferentes funciones de actualización que se quieran usar.
+  type FunctionUpdate = (SpecificBeliefConf, SpecificWeightedGraph) => SpecificBeliefConf
+
+  /**
+   * Función simulate
+   *
+   * Recibe recibe una función de actualización, una de influencia y una creencia específicas y un
+   * entero t que específica las unidades de tiempo para la simulación
+   *
+   * Retorna la secuencia de creencias específicas correspondientes a cada unidad de tiempo
+   */
+  def simulate(fu: FunctionUpdate, swg: SpecificWeightedGraph, b0: SpecificBeliefConf, t: Int): IndexedSeq[SpecificBeliefConf] = {
+    if(t == 0) Vector(b0)
+    else Vector(b0) ++ simulate(fu, swg, fu(b0, swg), t-1)
+  }
 }
