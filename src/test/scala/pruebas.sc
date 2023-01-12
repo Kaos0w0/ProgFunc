@@ -1,4 +1,6 @@
 import polarizacion._
+import polarizacionParalela._
+import scala.collection.parallel.CollectionConverters._
 
 val pi1 = Vector(0.4 , 0.6)
 val pi2 = Vector(0.5 , 0.5)
@@ -6,19 +8,17 @@ val pi3 = Vector(0.6 , 0.4)
 val pi4 = Vector(0.1 , 0.9)
 val pi5 = Vector(0.9 , 0.1)
 val y = Vector(1.0, 5.0)
+val yp = y.par
 
-RhoEr((pi1, y))
-RhoEr((pi2, y))
-RhoEr((pi3, y))
-RhoEr((pi4, y))
-RhoEr((pi5, y))
+// (vP: Vector de pruebas, f1: función 1)
+val vPf1 = Vector(pi1, pi2, pi3, pi4, pi5)
+
+println(for{
+  i <- 0 to 4
+} yield(rhoER(vPf1(i), y), rhoERPar(vPf1(i).par, yp)))
 
 val d1 = Vector(0.2,0.4,0.6,0.8)
 val d2 = Vector(0.1,0.4,0.7,0.9)
-
-def b0(nags:Int):SpecificBeliefConf= {
-  Vector.tabulate(nags)((i:Int) => {0.6})
-}
 
 def b1(nags:Int):SpecificBeliefConf= {
   Vector.tabulate(nags)((i: Int) => {if (i <= nags / 2) 0.6 else 0.4})
@@ -32,24 +32,18 @@ def b3(nags:Int):SpecificBeliefConf= {
   Vector.tabulate(nags)((i:Int) => (i+1).toDouble/nags.toDouble)
 }
 
-val b0_10= b0(10)
-val b0_20 = b0(20)
-
 val b1_10= b1(10)
-val b1_20 = b1(20)
-
 val b2_10= b2(10)
-val b2_20 = b2(20)
-
 val b3_10= b3(10)
-val b3_20 = b3(20)
 
-rho(d1, b1_10)
-rho(d1, b2_10)
-rho(d2, b1_10)
-rho(d2, b2_10)
-rho(d1, b3_10)
-rho(d2, b3_10)
+//Vector de bx_x
+val vDx = Vector(d1, d2)
+val vBx = Vector(b1_10, b2_10, b3_10)
+
+println(for{
+  dx <- vDx
+  vBx <- vBx
+} yield (rho(dx, vBx), rhoPar(dx.par, vBx.par)) )
 
 def i1(nags: Int): SpecificWeightedGraph = {
   ((i: Int, j: Int) => if (i == j) 1.0
@@ -65,18 +59,16 @@ def i2(nags: Int): SpecificWeightedGraph = {
 
 val i1_10 = i1(10)
 val i2_10 = i2(10)
-val i1_20 = i1(20)
-val i2_20 = i2(20)
+
+val vIx = Vector(i1_10, i2_10)
 
 println(showWeightedGraph(i1_10))
 println(showWeightedGraph(i2_10))
 
-confBiasUpdate(b1_10,i1_10)
-confBiasUpdate(b1_10,i2_10)
-confBiasUpdate(b2_10,i1_10)
-confBiasUpdate(b2_10,i2_10)
-confBiasUpdate(b3_10,i1_10)
-confBiasUpdate(b3_10,i2_10)
+println(for{
+  vBx <- vBx
+  vIx <- vIx
+} yield (confBiasUpdate(vBx, vIx), confBiasUpdatePar(vBx.par, vIx)) )
 
 for {
   b <- simulate(confBiasUpdate, i1_10, b1_10, 10)
